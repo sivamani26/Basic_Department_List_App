@@ -1,0 +1,22 @@
+[
+	{
+	  "id": 1,
+	  "name": "Customer Service",
+	  "department": "customer_service",
+	  "sub_departments": [
+	    { "id": 101, "name": "Support" },
+	    { "id": 102, "name": "Customer Success" }
+	  ]
+	},
+	{
+	  "id": 2,
+	  "name": "Design",
+	  "department": "design",
+	  "sub_departments": [
+	    { "id": 201, "name": "Graphic Design" },
+	    { "id": 202, "name": "Product Design" },
+	    { "id": 203, "name": "Web Design" }
+	  ]
+	}
+        ]
+        

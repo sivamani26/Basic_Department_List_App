@@ -1,26 +1,34 @@
+// src/App.tsx
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { BrowserRouter as Router, Route, Switch, Link } from 'react-router-dom';
+import { Container, Typography, Box } from '@mui/material';
+import LoginForm from './components/FirstPage';
+import DepartmentList from './components/DepartmentList';
+import DataTable from './components/DataTable';
 
-function App() {
+const App: React.FC = () => {
+  const data: never[] = [
+    // Your hardcoded JSON data here
+  ];
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Container maxWidth="md">
+      <Box my={4}>
+        <Typography variant="h4" component="h1" gutterBottom>
+          Department List
+        </Typography>
+        <Switch>
+            <Route exact path="/">
+              <LoginForm />
+            </Route>
+            <Route path="/data-table">
+              <DataTable />
+              <DepartmentList data ={data}/>
+            </Route>
+          </Switch>
+      </Box>
+    </Container>
   );
-}
+};
 
 export default App;
