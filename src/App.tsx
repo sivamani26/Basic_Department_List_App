@@ -19,7 +19,7 @@ const App: React.FC = () => {
         </Typography>
         <Switch>
             <Route exact path="/">
-              <LoginForm />
+              <LoginForm/>
             </Route>
             <Route path="/data-table">
               <DataTable />
