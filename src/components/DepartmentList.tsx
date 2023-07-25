@@ -1,24 +1,12 @@
+// src/components/DepartmentListUI.tsx
 import React, { useState } from 'react';
-import {
-  Checkbox,
-  Collapse,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  IconButton,
-} from '@mui/material';
+import { Typography, List, ListItem, ListItemText, Collapse, Checkbox } from '@mui/material';
 import { ExpandLess, ExpandMore } from '@mui/icons-material';
-
-interface SubDepartment {
-  id: number;
-  name: string;
-}
 
 interface Department {
   id: number;
   department: string;
-  sub_departments: SubDepartment[];
+  sub_departments: { id: number; name: string }[];
 }
 
 interface DepartmentListUIProps {
@@ -26,78 +14,112 @@ interface DepartmentListUIProps {
 }
 
 const DepartmentListUI: React.FC<DepartmentListUIProps> = ({ data }) => {
-  const [selectedItems, setSelectedItems] = useState<number[]>([]);
+  const [expanded, setExpanded] = useState<number | null>(null);
+  const [selectedDepartments, setSelectedDepartments] = useState<number[]>([]);
 
-  const handleToggle = (itemId: number) => () => {
-    const currentIndex = selectedItems.indexOf(itemId);
-    const newSelectedItems = [...selectedItems];
+  const handleExpand = (id: number) => {
+    setExpanded((prevExpanded) => (prevExpanded === id ? null : id));
+  };
 
-    if (currentIndex === -1) {
-      newSelectedItems.push(itemId);
-    } else {
-      newSelectedItems.splice(currentIndex, 1);
+  const handleSelectDepartment = (id: number) => {
+    setSelectedDepartments((prevSelected) => {
+      if (prevSelected.includes(id)) {
+        // If the department is already selected, remove it and all sub-departments
+        return prevSelected.filter(
+          (deptId) =>
+            deptId !== id &&
+            !data.find((dept) => dept.id === id)?.sub_departments.map((subDept) => subDept.id).includes(deptId)
+        );
+      } else {
+        // If the department is not selected, add it and all sub-departments
+        const department = data.find((dept) => dept.id === id);
+        if (department) {
+          const subDeptIds = department.sub_departments.map((subDept) => subDept.id);
+          return [...prevSelected, id, ...subDeptIds];
+        }
+        return prevSelected;
+      }
+    });
+  };
+
+  const handleSelectSubDepartment = (subDeptId: number) => {
+    setSelectedDepartments((prevSelected) => {
+      if (prevSelected.includes(subDeptId)) {
+        // If the sub-department is already selected, remove it
+        return prevSelected.filter((deptId) => deptId !== subDeptId);
+      } else {
+        // If the sub-department is not selected, add it
+        return [...prevSelected, subDeptId];
+      }
+    });
+  };
+
+  const isDepartmentSelected = (id: number) => {
+    const department = data.find((dept) => dept.id === id);
+    if (department) {
+      return department.sub_departments.every((subDept) => selectedDepartments.includes(subDept.id));
     }
-
-    setSelectedItems(newSelectedItems);
+    return false;
   };
 
-  const isItemSelected = (itemId: number) => selectedItems.indexOf(itemId) !== -1;
-
-  const handleSelectAllSubDepartments = (department: Department) => {
-    const allSubDepartmentsIds = department.sub_departments.map((subDept) => subDept.id);
-    const newSelectedItems = selectedItems.includes(department.id)
-      ? selectedItems.filter((id) => id !== department.id)
-      : [...selectedItems, department.id, ...allSubDepartmentsIds];
-    setSelectedItems(newSelectedItems);
+  const isSubDepartmentSelected = (subDepartments: { id: number; name: string }[]) => {
+    return subDepartments.every((subDept) => selectedDepartments.includes(subDept.id));
   };
 
-  const renderDepartment = (department: Department) => (
-    <React.Fragment key={department.id}>
-      <ListItem button onClick={handleToggle(department.id)}>
-        <ListItemIcon>
-          <Checkbox
-            edge="start"
-            checked={isItemSelected(department.id)}
-            tabIndex={-1}
-            disableRipple
-            color="primary"
-            onClick={() => handleSelectAllSubDepartments(department)}
-          />
-        </ListItemIcon>
-        <ListItemText
-          primary={department.department}
-          secondary={isItemSelected(department.id) ? <ExpandLess /> : <ExpandMore />}
+  const renderSubDepartments = (subDepartments: { id: number; name: string }[]) => {
+    return subDepartments.map((subDept) => (
+      <ListItem key={subDept.id} style={{ display: 'flex', alignItems: 'center', paddingLeft: 40 }}>
+        <Checkbox
+          checked={selectedDepartments.includes(subDept.id)}
+          onChange={() => handleSelectSubDepartment(subDept.id)}
+          indeterminate={false}
+          disableRipple
         />
+        <ListItemText primary={subDept.name} />
       </ListItem>
-      <Collapse in={isItemSelected(department.id)} timeout="auto" unmountOnExit>
-        <List component="div" disablePadding>
-          {department.sub_departments.map((subDept) => (
-            <ListItem key={subDept.id} button>
-              <ListItemIcon>
-                <Checkbox
-                  edge="start"
-                  checked={isItemSelected(subDept.id)}
-                  tabIndex={-1}
-                  disableRipple
-                  color="primary"
-                  onClick={handleToggle(subDept.id)}
-                />
-              </ListItemIcon>
-              <ListItemText
-                primary={subDept.name}
-                secondary={isItemSelected(subDept.id) ? <ExpandLess /> : <ExpandMore />}
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Collapse>
-    </React.Fragment>
-  );
+    ));
+  };
+
+  const renderDepartments = () => {
+    return data.map((dept) => (
+      <React.Fragment key={dept.id}>
+        <ListItem
+          button
+          onClick={() => handleExpand(dept.id)}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            bgcolor: '#f5f5f5',
+            borderRadius: 5,
+            mb: 1,
+            '&:hover': { bgcolor: '#e0e0e0' },
+          }}
+        >
+          <Checkbox
+            checked={isDepartmentSelected(dept.id)}
+            onChange={() => handleSelectDepartment(dept.id)}
+            indeterminate={isSubDepartmentSelected(dept.sub_departments)}
+            disableRipple
+          />
+          <ListItemText primary={dept.department} />
+          {expanded === dept.id ? <ExpandLess /> : <ExpandMore />}
+        </ListItem>
+        <Collapse in={expanded === dept.id} timeout="auto" unmountOnExit>
+          <List component="div" disablePadding>
+            {renderSubDepartments(dept.sub_departments)}
+          </List>
+        </Collapse>
+      </React.Fragment>
+    ));
+  };
 
   return (
-    <List component="nav">
-      {data.map((department) => renderDepartment(department))}
-    </List>
+    <div>
+      <Typography variant="h6" gutterBottom>
+        Department List
+      </Typography>
+      <List component="nav">{renderDepartments()}</List>
+    </div>
   );
 };
 
